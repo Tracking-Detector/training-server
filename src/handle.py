@@ -39,14 +39,15 @@ def delete_temporary_files():
     os.remove('training-data.csv')
     shutil.rmtree("./model")
 
-def train_and_save_model(data_frame, model, batch_size, epochs):
+def train_and_save_model(data_frame, model, vector_length, batch_size, epochs):
     print("Started Training")
-    X = data_frame.to_numpy()[:, 0:204]
+    X = data_frame.to_numpy()[:, 0:vector_length]
     y = data_frame.to_numpy()[:, -1]
     model.fit(X, y, batch_size= batch_size, epochs=epochs)
     evaluation = model.evaluate(X,y)
     print('Model evaluation ', evaluation)
     tfjs.converters.save_keras_model(model, 'model')
+    return evaluation[1]
 
 def upload_model_to_bucket(application_name, model_storage_name):
     print("Starting upload")
@@ -63,21 +64,27 @@ def upload_model_to_bucket(application_name, model_storage_name):
             minioClient.fput_object(MODEL_BUCKET_NAME, application_name+"/"+model_storage_name+"/"+file, file_path)
 
 
-def handler(trainingDataFileName, applicationName, modelStorageName, batchSize, epochs, inputVectorDims, modelStructure):
+def handler(applicationName, modelStorageName, trainingDataFilename, modelJson, vectorLength, batchSize, epochs):
     f = io.StringIO()
     with redirect_stdout(f):
         try:
-            extract_data(trainingDataFileName)
+            extract_data(trainingDataFilename)
             training_data = pd.concat([chunk for chunk in pd.read_csv("training-data.csv", sep=",", chunksize=1000)]) 
-            model = tf.keras.models.model_from_json(modelStructure)
+            model = tf.keras.models.model_from_json(modelJson)
             model.compile(loss='mse', optimizer=tf.keras.optimizers.RMSprop(learning_rate=1e-2), metrics=['accuracy'])
             print(model.summary())
-            train_and_save_model(training_data, model, batchSize, epochs)
+            acc = train_and_save_model(training_data, model, vectorLength, batchSize, epochs)
             upload_model_to_bucket(applicationName, modelStorageName)
             delete_temporary_files()
-            return f.getvalue()
+            return {
+                'accuracy': acc,
+                'logs': f.getvalue()
+            }
         except Exception as e:
             print(e)
-            return f.getvalue()
+            return {
+                'error': e,
+                'logs': f.getvalue()
+            }
    
  
