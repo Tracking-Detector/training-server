@@ -12,7 +12,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    
+      - name: Ls
+        run: ls -al
       - name: Push Docker image to Docker Hub
         uses: docker/build-push-action@v2
         with:
