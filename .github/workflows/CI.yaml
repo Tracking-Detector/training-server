@@ -9,6 +9,32 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+      - name: Install Dev-Dependecies
+        run: pip install -r dev-requirements.txt
+      - name: Run Linting
+        run: flake8 src test    
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+      - name: Install Dev-Dependecies
+        run: pip install -r dev-requirements.txt
+      - name: Run Linting
+        run: pytest    
   deploy:
     runs-on: ubuntu-latest
     steps:

@@ -2,6 +2,4 @@ ak-minio
 pandas
 numpy
 tensorflowjs
-sklearn
 tensorflow
-polars

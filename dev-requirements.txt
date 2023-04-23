@@ -1,4 +1,5 @@
 pytest
 pytest-mock
-back
+black
 isort
+flake8

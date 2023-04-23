@@ -1,19 +1,10 @@
-import gzip
 import io
-import os
-import shutil
 from contextlib import redirect_stdout
 
-import pandas as pd
 import tensorflow as tf
 import tensorflowjs as tfjs
 
-from minio_client import clean_up_files, extract_data, upload_model_to_bucket
-
-MINIO_ACCESS_KEY = os.environ["MINIO_ACCESS_KEY"]
-MINIO_SECRET_KEY = os.environ["MINIO_PRIVATE_KEY"]
-DATA_BUCKET_NAME = os.environ["TRAINING_DATA_BUCKET_NAME"]
-MODEL_BUCKET_NAME = os.environ["MODEL_BUCKET_NAME"]
+import src.minio_client
 
 
 def train_and_save_model(data_frame, model, vector_length, batch_size, epochs):
@@ -25,6 +16,10 @@ def train_and_save_model(data_frame, model, vector_length, batch_size, epochs):
     print("Model evaluation ", evaluation)
     tfjs.converters.save_keras_model(model, "model")
     return evaluation[1]
+
+
+def status():
+    return {"status": "RUNNING"}
 
 
 def handler(
@@ -39,7 +34,7 @@ def handler(
     f = io.StringIO()
     with redirect_stdout(f):
         try:
-            training_data = extract_data(trainingDataFilename)
+            training_data = src.minio_client.extract_data(trainingDataFilename)
             model = tf.keras.models.model_from_json(modelJson)
             model.compile(
                 loss="mse",
@@ -50,11 +45,10 @@ def handler(
             acc = train_and_save_model(
                 training_data, model, vectorLength, batchSize, epochs
             )
-            upload_model_to_bucket(applicationName, modelStorageName)
-            delete_temporary_files()
+            src.minio_client.upload_model_to_bucket(applicationName, modelStorageName)
+            src.minio_client.clean_up_files()
             return {"accuracy": acc, "logs": f.getvalue()}
         except Exception as e:
             print(e)
-            delete_temporary_files()
-            clean_up_files()
-            return {"error": e, "logs": f.getvalue()}
+            src.minio_client.clean_up_files()
+            return {"error": str(e), "logs": f.getvalue()}
