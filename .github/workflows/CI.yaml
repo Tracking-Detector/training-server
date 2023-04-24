@@ -16,14 +16,13 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Install Dependencies
-        run: pip install -r requirements.txt
       - name: Install Dev-Dependecies
         run: pip install -r dev-requirements.txt
       - name: Run Linting
         run: flake8 src test    
   test:
     runs-on: ubuntu-latest
+    needs: lint
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -33,10 +32,26 @@ jobs:
         run: pip install -r requirements.txt
       - name: Install Dev-Dependecies
         run: pip install -r dev-requirements.txt
-      - name: Run Linting
-        run: pytest    
+      - name: Run Test
+        run: pytest
+  validate-image:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Start container
+        run: docker-compose -f "./docker_validation/docker-compose.yaml" up -d --build
+      - name: Run Test
+        run: python docker_validation/validate_image.py
+      - name: Stop containers
+        if: always()
+        run: docker-compose -f "./docker_validation/docker-compose.yaml" down
   deploy:
     runs-on: ubuntu-latest
+    needs: validate-image
     steps:
       - uses: actions/checkout@v3
       - name: Push Docker image to Docker Hub

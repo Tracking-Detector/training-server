@@ -7,7 +7,7 @@ import tensorflow as tf
 from tensorflow.keras import Input, Sequential
 from tensorflow.keras.layers import Dense
 
-from src.handle import handler
+from handle import handler
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -41,12 +41,10 @@ def test_should_train_model_from_model_json(mocker):
     mock_epochs = 10
     mock_data = [[1, 0.5, 7, 10, -1], [0, 0.5, 1, 2, 1], [1, 0.5, 1, 2, 1]]
     mock_extract_data = mocker.patch(
-        "src.minio_client.extract_data", return_value=pd.DataFrame(mock_data)
+        "minio_client.extract_data", return_value=pd.DataFrame(mock_data)
     )
-    mock_upload = mocker.patch(
-        "src.minio_client.upload_model_to_bucket", return_value=None
-    )
-    mock_cleanup = mocker.patch("src.minio_client.clean_up_files", return_value=None)
+    mock_upload = mocker.patch("minio_client.upload_model_to_bucket", return_value=None)
+    mock_cleanup = mocker.patch("minio_client.clean_up_files", return_value=None)
 
     # when
     res = handler(
@@ -80,9 +78,9 @@ def test_should_fail_when_model_json_not_correct(mocker):
     mock_epochs = 10
     mock_data = [[1, 0.5, 7, 10, -1], [0, 0.5, 1, 2, 1], [1, 0.5, 1, 2, 1]]
     mock_extract_data = mocker.patch(
-        "src.minio_client.extract_data", return_value=pd.DataFrame(mock_data)
+        "minio_client.extract_data", return_value=pd.DataFrame(mock_data)
     )
-    mock_cleanup = mocker.patch("src.minio_client.clean_up_files", return_value=None)
+    mock_cleanup = mocker.patch("minio_client.clean_up_files", return_value=None)
 
     # when
     res = handler(

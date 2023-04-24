@@ -1,5 +1,2 @@
 ak-minio
-pandas
-numpy
 tensorflowjs
-tensorflow

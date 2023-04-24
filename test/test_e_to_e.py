@@ -3,7 +3,7 @@ import os
 import xmlrpc.client
 from time import sleep
 
-from src.server import start_server
+from server import start_server
 
 
 def test_server_availability():
